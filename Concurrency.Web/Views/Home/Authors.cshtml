@@ -1,0 +1,56 @@
+﻿@{
+    ViewBag.Title = "Authors";
+}
+
+<div id="listOfAuthorsBlock">
+    <h2>List of authors</h2>
+    <table class="table table-striped authorsList">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>First Name</th>
+                <th>Last Name</th>
+            </tr>
+        </thead>
+        <tbody id="authorsListRows"></tbody>
+    </table>
+
+    <form id="addAuthorForm" method="POST" action="#" class="form-inline" role="form">
+        <div class="form-group">
+            <label for="add_firstName">First Name</label>
+            <input type="text" class="form-control" name="add_firstName" id="add_firstName" />
+        </div>
+
+        <div class="form-group">
+            <label for="add_lastName">Last Name</label>
+            <input type="text" class="form-control" name="add_lastName" id="add_lastName" />
+        </div>
+
+        <a class="btn btn-default" href="javascript: ;" onclick="authorManager.AddAuthor()"> Add </a>
+    </form>
+</div>
+
+<div id="editAuthorBlock" style="display: none">
+    <h2 id="editAuthorBlockTitle">Edit author</h2>
+    <form id="editAuthorForm" method="POST" action="#" role="form">
+        <input type="hidden" id="edit_id" />
+        <input type="hidden" id="edit_original_firstName" />
+        <input type="hidden" id="edit_original_lastName" />
+
+        <div class="form-group">
+            <label for="edit_firstName">First Name</label>
+            <input type="text" class="form-control" name="edit_firstName" id="edit_firstName" />
+        </div>
+
+        <div class="form-group">
+            <label for="edit_lastName">Last Name</label>
+            <input type="text" class="form-control" name="edit_lastName" id="edit_lastName" />
+        </div>
+
+        <a class="btn btn-default" href="javascript: ;" onclick="authorManager.EditAuthor()"> Save </a>
+    </form>
+</div>
+
+@section Scripts {
+    <script src="~/Scripts/authors.js"></script>
+}

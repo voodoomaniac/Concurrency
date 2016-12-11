@@ -1,0 +1,67 @@
+﻿@{
+    ViewBag.Title = "Books";
+}
+
+<div id="listOfBooksBlock">
+    <h2>List of books</h2>
+    <table class="table table-striped booksList">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Name</th>
+                <th>Publish Date</th>
+                <th>Is Locked</th>
+                <th>Locked by</th>
+            </tr>
+        </thead>
+        <tbody id="booksListRows"></tbody>
+    </table>
+
+    <form id="addBookForm" method="POST" action="#" class="form-inline" role="form">
+        <div class="form-group">
+            <label for="add_name">Name</label>
+            <input type="text" class="form-control" name="add_name" id="add_name" />
+        </div>
+
+        <div class="form-group">
+            <label for="add_publishDate">Publish Date</label>
+            <div class='input-group date' id='datetimepicker1'>
+                <input type="text" class="form-control" name="add_publishDate" id="add_publishDate" />
+                <span class="input-group-addon">
+                    <span class="glyphicon glyphicon-calendar"></span>
+                </span>
+            </div>
+        </div>
+
+        <a class="btn btn-default" href="javascript: ;" onclick="bookManager.AddBook()"> Add </a>
+    </form>
+</div>
+
+<div id="editBookBlock" style="display:none">
+    <h2 id="editBookBlockTitle">Edit book</h2>
+    <form id="editBookForm" method="POST" action="#" role="form">
+        <input type="hidden" id="edit_id" />
+
+        <div class="form-group">
+            <label for="edit_name">Name</label>
+            <input type="text" class="form-control" name="edit_name" id="edit_name" />
+        </div>
+
+        <div class="form-group">
+            <label for="edit_publishDate">Publish Date</label>
+
+            <div class='input-group date' id='datetimepicker2'>
+                <input type="text" class="form-control" name="edit_publishDate" id="edit_publishDate" />
+                <span class="input-group-addon">
+                    <span class="glyphicon glyphicon-calendar"></span>
+                </span>
+            </div>
+        </div>
+
+        <a class="btn btn-default" href="javascript: ;" onclick="bookManager.EditBook()"> Save </a>
+    </form>
+</div>
+
+@section Scripts {
+    <script src="~/Scripts/books.js"></script>
+}

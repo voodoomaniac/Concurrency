@@ -1,0 +1,1 @@
+﻿<%@ Application Codebehind="Global.asax.cs" Inherits="Concurrency.Web.MvcApplication" Language="C#" %>

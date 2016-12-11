@@ -1,0 +1,7 @@
+packages/
+Concurrency.DAL/obj/
+Concurrency.Web/bin/
+Concurrency.Core/obj/
+Concurrency.Web/obj/
+Concurrency.Web/fonts/
+Concurrency.Web/Content/

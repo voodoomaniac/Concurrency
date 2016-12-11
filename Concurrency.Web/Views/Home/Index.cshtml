@@ -1,0 +1,32 @@
+﻿@{
+    ViewBag.Title = "Home Page";
+}
+<h2>Concurrency</h2>
+<p>Solution contains following APIs:</p>
+
+<div class="container">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Type</th>
+                <th>Name</th>
+                <th>API Address</th>
+                <th>Page Address</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Optimistic</td>
+                <td>Authors</td>
+                <td>api/Authors</td>
+                <td>@Html.ActionLink("Authors (Optimistic)", "Authors", "Home")</td>
+            </tr>
+            <tr>
+                <td>Pessimistic</td>
+                <td>Books</td>
+                <td>api/Books</td>
+                <td>@Html.ActionLink("Books (Pessimistic)", "Books", "Home")</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
