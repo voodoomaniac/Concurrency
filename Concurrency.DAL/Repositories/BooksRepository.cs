@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Data.SqlClient;
 using Concurrency.Core.Models;
+using Concurrency.DAL.Map;
 
 namespace Concurrency.DAL.Repositories
 {
@@ -25,15 +26,7 @@ namespace Concurrency.DAL.Repositories
 
                     connection.Open();
 
-                    using (var reader = command.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            list.Add(Book.CreateFromDataRecord(reader));
-                        }
-                    }
-
-                    return list;
+                    return new DbBook().ToList(command);
                 }
             }
         }
@@ -57,7 +50,7 @@ namespace Concurrency.DAL.Repositories
                     {
                         while (reader.Read())
                         {
-                            book = Book.CreateFromDataRecord(reader);
+                            book = new DbBook().MapFromDataRecord(reader, new Book());
                         }
                     }
                 }
