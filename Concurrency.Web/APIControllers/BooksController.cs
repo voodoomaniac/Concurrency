@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Web.Http;
 using Concurrency.Core.Models;
 using Concurrency.DAL.Repositories;
+using Concurrency.DAL.UnitOfWork;
 
 namespace Concurrency.Web.APIControllers
 {
@@ -16,63 +17,77 @@ namespace Concurrency.Web.APIControllers
 
         public BooksController()
         {
-            _booksRepository = new BooksRepository(ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString);
+            _booksRepository = new BooksRepository(UnitOfWorkFactory.Create());
         }
 
         // GET: api/Books
         public IEnumerable<Book> Get()
         {
-            var books = _booksRepository.GetAll();
-
-            return books;
+            using (_booksRepository)
+            {
+                var books = _booksRepository.GetAll();
+                return books;
+            }
         }
 
         // GET: api/Books/5
         public HttpResponseMessage Get(int id, bool isForEdit)
         {
-            Book book = null;
-
-            if (isForEdit)
+            using (_booksRepository)
             {
-                book = _booksRepository.Get(id, true, userName);
+                Book book = null;
 
-                if (book == null)
+                if (isForEdit)
                 {
-                    var response = Request.CreateResponse(HttpStatusCode.Conflict, book, "application/json");
-                    response.ReasonPhrase = "locked for edit";
-                    return response;
-                }
-            }
+                    book = _booksRepository.Get(id, true, userName);
 
-            book = _booksRepository.Get(id);
-            return Request.CreateResponse(HttpStatusCode.OK, book, "application/json");
+                    if (book == null)
+                    {
+                        var response = Request.CreateResponse(HttpStatusCode.Conflict, book, "application/json");
+                        response.ReasonPhrase = "locked for edit";
+                        return response;
+                    }
+                }
+
+                book = _booksRepository.Get(id);
+                return Request.CreateResponse(HttpStatusCode.OK, book, "application/json");
+            }
         }
 
         // POST: api/Books
         public void Post([FromBody]Book book)
         {
-            _booksRepository.Add(book);
+            using (_booksRepository)
+            {
+                _booksRepository.Add(book);
+            }
         }
 
         // PUT: api/Books
         public HttpResponseMessage Put([FromBody]Book book)
         {
-            bool isSuccess = _booksRepository.Update(book, userName);
-
-            if (!isSuccess)
+            using (_booksRepository)
             {
-                var response = Request.CreateResponse(HttpStatusCode.Conflict);
-                response.ReasonPhrase = "No records were updated";
-                return response;
-            }
+                bool isSuccess = _booksRepository.Update(book, userName);
 
-            return Request.CreateResponse(204);
+                if (!isSuccess)
+                {
+                    var response = Request.CreateResponse(HttpStatusCode.Conflict);
+                    response.ReasonPhrase = "No records were updated";
+                    return response;
+                }
+
+                return Request.CreateResponse(204);
+            }
         }
 
         // DELETE: api/Books/5
         public void Delete(int id)
         {
-            _booksRepository.Delete(id);
+            using (_booksRepository)
+            {
+                _booksRepository.Delete(id);
+            }
         }
     }
 }

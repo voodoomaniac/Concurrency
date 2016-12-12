@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Data;
 using Concurrency.Core.Models;
+using Concurrency.DAL.Interfaces;
 
-namespace Concurrency.DAL.Map
+namespace Concurrency.DAL.Mappers
 {
-    class DbAuthor : DbEntity<Author>
+    class AuthorMapper : IMapper<Author>
     {
-        public override Author MapFromDataRecord(IDataRecord record, Author item)
+        public Author MapFromDataRecord(IDataRecord record, Author item)
         {
             item.Id = Convert.ToInt32(record["Id"]);
             item.FirstName = Convert.ToString(record["FirstName"]);

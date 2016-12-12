@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Web.Http;
 using Concurrency.Core.Models;
 using Concurrency.DAL.Repositories;
+using Concurrency.DAL.UnitOfWork;
 
 namespace Concurrency.Web.APIControllers
 {
@@ -14,31 +15,37 @@ namespace Concurrency.Web.APIControllers
 
         public AuthorsController()
         {
-            _authorsRepository = new AuthorsRepository(ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString);
+            _authorsRepository = new AuthorsRepository(UnitOfWorkFactory.Create());
         }
 
         // GET: api/Authors
         public IEnumerable<Author> Get()
         {
-            var authors = _authorsRepository.GetAll();
-
-            return authors;
+            using (_authorsRepository)
+            {
+                var authors = _authorsRepository.GetAll();
+                return authors;
+            }
         }
 
         // GET: api/Authors/5
         public Models.Author Get(int id)
         {
-            Models.Author author = new Models.Author();
-
-            author.ToWebModel(_authorsRepository.Get(id));
-
-            return author;
+            using (_authorsRepository)
+            {
+                Models.Author author = new Models.Author();
+                author.ToWebModel(_authorsRepository.Get(id));
+                return author;
+            }
         }
 
         // POST: api/Authors
         public void Post([FromBody] Author author)
         {
-            _authorsRepository.Add(author);
+            using (_authorsRepository)
+            {
+                _authorsRepository.Add(author);
+            }
         }
 
         // PUT: api/Authors
@@ -58,31 +65,37 @@ namespace Concurrency.Web.APIControllers
                 LastName = author.LastName
             };
 
-            bool isSuccess = _authorsRepository.Update(originalAuthor, updatedAuthor);
-
-            if (!isSuccess)
+            using (_authorsRepository)
             {
-                var actualAuthor = _authorsRepository.Get(author.Id);
+                bool isSuccess = _authorsRepository.Update(originalAuthor, updatedAuthor);
 
-                var response = Request.CreateResponse(HttpStatusCode.Conflict, actualAuthor, "application/json");
-                response.ReasonPhrase = "Concurrency occured";
-                return response;
+                if (!isSuccess)
+                {
+                    var actualAuthor = _authorsRepository.Get(author.Id);
+
+                    var response = Request.CreateResponse(HttpStatusCode.Conflict, actualAuthor, "application/json");
+                    response.ReasonPhrase = "Concurrency occured";
+                    return response;
+                }
+
+                return Request.CreateResponse(204);
             }
-
-            return Request.CreateResponse(204);
         }
 
         // DELETE: api/Authors
         public HttpResponseMessage Delete([FromBody]Author author)
         {
-            bool isSuccess = _authorsRepository.Delete(author);
-
-            if (!isSuccess)
+            using (_authorsRepository)
             {
-                return Request.CreateResponse(HttpStatusCode.Conflict, "Concurrency occured", "application/json");
-            }
+                bool isSuccess = _authorsRepository.Delete(author);
 
-            return Request.CreateResponse(204);
+                if (!isSuccess)
+                {
+                    return Request.CreateResponse(HttpStatusCode.Conflict, "Concurrency occured", "application/json");
+                }
+
+                return Request.CreateResponse(204);
+            }
         }
     }
 }

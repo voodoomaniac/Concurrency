@@ -1,31 +1,27 @@
 ﻿using System.Collections.Generic;
-using System.Data.SqlClient;
+using System.Data;
 using Concurrency.Core.Models;
-using Concurrency.DAL.Map;
+using Concurrency.DAL.Extensions;
+using Concurrency.DAL.Mappers;
+using Concurrency.DAL.UnitOfWork;
 
 namespace Concurrency.DAL.Repositories
 {
     //Implements optimistic concurrency
-    public class AuthorsRepository
+    public class AuthorsRepository : BaseRepository<Author>
     {
         private const string AuthorsTableName = "Authors";
-        private readonly string _connectionString;
 
-        public AuthorsRepository(string connectionString)
+        public AuthorsRepository(AdoNetUnitOfWork unitOfWork) : base(unitOfWork)
         {
-            _connectionString = connectionString;
         }
 
         public IEnumerable<Author> GetAll()
         {
-            using (var connection = new SqlConnection(_connectionString))
+            using (var command = unitOfWork.CreateCommand())
             {
-                using (var command = new SqlCommand($"SELECT * FROM {AuthorsTableName}", connection))
-                {
-                    connection.Open();
-
-                    return new DbAuthor().ToList(command);
-                }
+                command.CommandText = $"SELECT * FROM {AuthorsTableName}";
+                return this.ToList(command, new AuthorMapper());
             }
         }
 
@@ -33,80 +29,72 @@ namespace Concurrency.DAL.Repositories
         {
             Author author = null;
 
-            using (var connection = new SqlConnection(_connectionString))
+            using (var command = unitOfWork.CreateCommand())
             {
-                using (var command = new SqlCommand($"SELECT * FROM {AuthorsTableName} WHERE Id = @Id", connection))
+                command.CommandText = $"SELECT * FROM {AuthorsTableName} WHERE Id = @Id";
+                command.AddWithValue("@Id", id);
+
+                using (IDataReader reader = command.ExecuteReader())
                 {
-                    command.Parameters.AddWithValue("@Id", id);
-                    connection.Open();
-
-                    using (SqlDataReader reader = command.ExecuteReader())
+                    while (reader.Read())
                     {
-                        while (reader.Read())
-                        {
-                            author = new DbAuthor().MapFromDataRecord(reader, new Author());
-                        }
+                        author = new AuthorMapper().MapFromDataRecord(reader, new Author());
                     }
-
-                    return author;
                 }
+
+                return author;
             }
         }
 
         public void Add(Author item)
         {
-            using (var connection = new SqlConnection(_connectionString))
+            using (var command = unitOfWork.CreateCommand())
             {
-                using (var command = new SqlCommand($"INSERT INTO {AuthorsTableName} (firstName, lastName) VALUES (@FirstName, @LastName)", connection))
-                {
-                    command.Parameters.AddWithValue("@FirstName", item.FirstName);
-                    command.Parameters.AddWithValue("@LastName", item.LastName);
+                command.CommandText = $"INSERT INTO {AuthorsTableName} (firstName, lastName) VALUES (@FirstName, @LastName)";
+                command.AddWithValue("@FirstName", item.FirstName);
+                command.AddWithValue("@LastName", item.LastName);
 
-                    connection.Open();
-                    command.ExecuteNonQuery();
-                }
+                command.ExecuteNonQuery();
+                unitOfWork.SaveChanges();
             }
         }
 
         public bool Delete(Author item)
         {
-            using (var connection = new SqlConnection(_connectionString))
+            using (var command = unitOfWork.CreateCommand())
             {
-                using (var command = new SqlCommand($"DELETE FROM {AuthorsTableName} WHERE Id = @Id " +
-                            "AND [FirstName] = @FirstName " +
-                            "AND [LastName] = @LastName", connection))
-                {
-                    command.Parameters.AddWithValue("@Id", item.Id);
-                    command.Parameters.AddWithValue("@FirstName", item.FirstName);
-                    command.Parameters.AddWithValue("@LastName", item.LastName);
+                command.CommandText = $"DELETE FROM {AuthorsTableName} WHERE Id = @Id " +
+                                       "AND [FirstName] = @FirstName " +
+                                       "AND [LastName] = @LastName";
+                command.AddWithValue("@Id", item.Id);
+                command.AddWithValue("@FirstName", item.FirstName);
+                command.AddWithValue("@LastName", item.LastName);
 
-                    connection.Open();
+                int rowsAffected = command.ExecuteNonQuery();
+                unitOfWork.SaveChanges();
 
-                    int rowsAffected = command.ExecuteNonQuery();
-                    return rowsAffected != 0;
-                }
+                return rowsAffected != 0;
             }
         }
 
         public bool Update(Author originalItem, Author updatedItem)
         {
-            using (var connection = new SqlConnection(_connectionString))
+            using (var command = unitOfWork.CreateCommand())
             {
-                using (var command = new SqlCommand($"UPDATE {AuthorsTableName} SET [FirstName] = @FirstName, [LastName] = @LastName  " +
-                            "WHERE [Id] = @Id AND [FirstName] = @original_FirstName " +
-                            "AND [LastName] = @original_LastName", connection))
-                {
-                    command.Parameters.AddWithValue("@Id", originalItem.Id);
-                    command.Parameters.AddWithValue("@FirstName", updatedItem.FirstName);
-                    command.Parameters.AddWithValue("@LastName", updatedItem.LastName);
-                    command.Parameters.AddWithValue("@original_FirstName", originalItem.FirstName);
-                    command.Parameters.AddWithValue("@original_LastName", originalItem.LastName);
+                command.CommandText =
+                    $"UPDATE {AuthorsTableName} SET [FirstName] = @FirstName, [LastName] = @LastName  " +
+                    "WHERE [Id] = @Id AND [FirstName] = @original_FirstName " +
+                    "AND [LastName] = @original_LastName";
+                command.AddWithValue("@Id", originalItem.Id);
+                command.AddWithValue("@FirstName", updatedItem.FirstName);
+                command.AddWithValue("@LastName", updatedItem.LastName);
+                command.AddWithValue("@original_FirstName", originalItem.FirstName);
+                command.AddWithValue("@original_LastName", originalItem.LastName);
+                
+                int rowsAffected = command.ExecuteNonQuery();
+                unitOfWork.SaveChanges();
 
-                    connection.Open();
-
-                    int rowsAffected = command.ExecuteNonQuery();
-                    return rowsAffected != 0;
-                }
+                return rowsAffected != 0;
             }
         }
     }
